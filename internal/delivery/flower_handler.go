@@ -48,7 +48,6 @@ func (h *FlowerHandler) CreateFlower(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-
 	newFlower, err := h.service.Create(flowerCreate.Name, flowerCreate.Description, flowerCreate.Price)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create flower"})
