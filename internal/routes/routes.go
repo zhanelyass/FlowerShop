@@ -2,13 +2,21 @@ package routes
 
 import (
 	"FlowerShop/internal/auth"
+	"FlowerShop/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes(r *gin.Engine) {
-	flowers := r.Group("api/v1/auth")
+
+	authRotes := r.Group("api/v1/auth")
 	{
-		flowers.POST("/login", auth.login)
-		flowers.POST("/register", auth.Register)
+		authRotes.POST("/login", auth.login)
+		authRotes.POST("/register", auth.Register)
+	}
+
+	protected := r.Group("api/v1")
+	protected.Use(middleware.AuthRequired())
+	{
+		protected.GET("/me", auth.Me)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"FlowerShop/internal/db"
 	user "FlowerShop/internal/models"
 	"github.com/gin-gonic/gin"
-	"golng/org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
@@ -70,4 +70,23 @@ func Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+}
+
+func Me(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found in context"})
+		return
+	}
+
+	var u user.User
+	if err := db.DB.First(&u, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":       u.ID,
+		"username": u.Username,
+	})
 }
