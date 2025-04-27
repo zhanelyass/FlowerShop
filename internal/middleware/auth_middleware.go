@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"FlowerShop/internal/auth"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"rest-project/internal/auth"
 	"strings"
 )
 
 func AuthRequired() gin.HandlerFunc {
+
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -30,7 +31,15 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
+		// Извлечение роли из claims
+		role, ok := claims["role"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "role not found in token"})
+			return
+		}
+
 		c.Set("userID", uint(userIDFloat))
+		c.Set("role", role)
 		c.Next()
 	}
 }

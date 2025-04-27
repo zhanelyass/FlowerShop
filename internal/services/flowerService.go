@@ -16,33 +16,28 @@ type FlowerService struct {
 	repo FlowerRepository
 }
 
-// Конструктор StudentService
+// Конструктор
 func NewFlowerService(flowerRepo FlowerRepository) *FlowerService {
 	return &FlowerService{repo: flowerRepo}
 }
 
-// Получение всех студентов
+// Получение всех цветов
 func (f *FlowerService) GetAllFlowers() ([]models.Flower, error) {
 	return f.repo.GetAll()
 }
 
-// Получение студента по ID
+// Получение цветка по ID
 func (f *FlowerService) GetFlowerByID(id int) (*models.Flower, error) {
 	return f.repo.GetById(id)
 }
 
-// Создание нового студента
-func (f *FlowerService) Create(name, description string, price float64) (*models.Flower, error) {
-	flower := &models.Flower{
-		Name:        name,
-		Description: description,
-		Price:       price,
-	}
+// Создание нового цветка
+func (f *FlowerService) Create(flower *models.Flower) (*models.Flower, error) {
 	err := f.repo.Create(flower)
 	return flower, err
 }
 
-// Обновление данных студента
+// Обновление цветка
 func (f *FlowerService) Update(id int, flowerEdit *models.FlowerEdit) (*models.Flower, error) {
 	err := f.repo.Update(id, flowerEdit)
 	if err != nil {
@@ -51,7 +46,7 @@ func (f *FlowerService) Update(id int, flowerEdit *models.FlowerEdit) (*models.F
 	return f.GetFlowerByID(id)
 }
 
-// Удаление студента
+// Удаление цветка
 func (f *FlowerService) DeleteFlower(flowerID int) error {
 	return f.repo.Delete(flowerID)
 }

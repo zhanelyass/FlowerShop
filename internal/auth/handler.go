@@ -13,13 +13,13 @@ func Login(c *gin.Context) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid"})
+	if err := c.ShouldBindJSON(&req); err != nil || req.Username == "" || req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	var u user.User
-	db.DB.Where("username = ? ", req.Username).First(&u)
+	db.DB.Where("username = ?", req.Username).First(&u)
 	if u.ID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -30,7 +30,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, _ := GenerateJWT(u.ID)
+	// Генерируем токен с userID и ролью
+	token, _ := GenerateJWT(u.ID, u.Role)
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
@@ -45,25 +46,27 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Check if user already exists
+	// Проверка: существует ли уже пользователь с таким username
 	var existing user.User
 	if err := db.DB.Where("username = ?", req.Username).First(&existing).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Username already taken"})
 		return
 	}
 
-	// Hash password
+	// Хэширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	// Create new user
+	// Создание пользователя с ролью user
 	u := user.User{
 		Username: req.Username,
 		Password: string(hashedPassword),
+		Role:     "user", // УСТАНОВКА РОЛИ
 	}
+
 	if err := db.DB.Create(&u).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
@@ -75,18 +78,19 @@ func Register(c *gin.Context) {
 func Me(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found in context"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
 		return
 	}
 
 	var u user.User
 	if err := db.DB.First(&u, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"id":       u.ID,
 		"username": u.Username,
+		"role":     u.Role,
 	})
 }

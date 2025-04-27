@@ -8,18 +8,22 @@ import (
 	"strconv"
 )
 
+type FlowerHandler struct {
+	service *services.FlowerService
+}
+
 // Конструктор
 func NewFlowerHandler(service *services.FlowerService) *FlowerHandler {
 	return &FlowerHandler{service: service}
 }
 
-type FlowerHandler struct {
-	service *services.FlowerService
-}
-
 // Получение списка всех цветов
 func (h *FlowerHandler) GetAllFlowers(c *gin.Context) {
-	flowers, _ := h.service.GetAllFlowers()
+	flowers, err := h.service.GetAllFlowers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch flowers"})
+		return
+	}
 	c.JSON(http.StatusOK, flowers)
 }
 
@@ -48,7 +52,14 @@ func (h *FlowerHandler) CreateFlower(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	newFlower, err := h.service.Create(flowerCreate.Name, flowerCreate.Description, flowerCreate.Price)
+
+	newFlower := &models.Flower{
+		Name:        flowerCreate.Name,
+		Description: flowerCreate.Description,
+		Price:       flowerCreate.Price,
+	}
+
+	newFlower, err := h.service.Create(newFlower)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create flower"})
 		return
